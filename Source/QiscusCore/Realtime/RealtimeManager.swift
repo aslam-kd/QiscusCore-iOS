@@ -514,6 +514,7 @@ class RealtimeManager {
         // check convert status
         guard let status = _status else { return }
         if status == .deleted { return }
+        if !_comment.isQiscustype() || _comment.type == CommentType.systemEvent.rawValue { return }
         if let room = QiscusCore.database.room.find(id: roomId) {
             // very tricky, need to review v3, calculating comment status in backend for group rooms
             if let comments = QiscusCore.database.comment.find(roomId: roomId) {
@@ -537,9 +538,11 @@ class RealtimeManager {
                             if c.status.intValue < status.intValue {
                                 let new = c
                                 // update comment
-                                new.status = status
-                                QiscusCore.database.comment.save([new])
-                                QiscusCore.eventManager.gotMessageStatus(comment: new) // patch hard update
+                                if c.status.intValue != CommentStatus.failed.intValue {
+                                    new.status = status
+                                    QiscusCore.database.comment.save([new])
+                                    QiscusCore.eventManager.gotMessageStatus(comment: new) // patch hard update
+                                }
                             }
                             
                         }
@@ -669,9 +672,11 @@ class RealtimeManager {
                                     if c.status.intValue < status.intValue {
                                         let new = c
                                         // update comment
-                                        new.status = .read
-                                        QiscusCore.database.comment.save([new])
-                                        QiscusCore.eventManager.gotMessageStatus(comment: new)
+                                        if c.status.intValue != CommentStatus.failed.intValue {
+                                            new.status = .read
+                                            QiscusCore.database.comment.save([new])
+                                            QiscusCore.eventManager.gotMessageStatus(comment: new)
+                                        }
                                     }
                                     
                                 }
@@ -685,9 +690,11 @@ class RealtimeManager {
                                     if c.status.intValue < status.intValue {
                                         let new = c
                                         // update comment
-                                        new.status = .delivered
-                                        QiscusCore.database.comment.save([new])
-                                        QiscusCore.eventManager.gotMessageStatus(comment: new)
+                                        if c.status.intValue != CommentStatus.failed.intValue {
+                                            new.status = .delivered
+                                            QiscusCore.database.comment.save([new])
+                                            QiscusCore.eventManager.gotMessageStatus(comment: new)
+                                        }
                                     }
                                     
                                 }
